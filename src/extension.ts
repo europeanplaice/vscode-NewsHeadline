@@ -5,15 +5,19 @@ import { JSDOM } from 'jsdom';
 
 let currentHeadline: string;
 
-interface News {
-  [attr: string]: string
-}
 
-let newsgroup: News[] = [{}];
+type News = {
+  title: string;
+  description: string;
+  link: string;
+  count: number;
+};
+
+let newsgroup: News[] = [];
 
 async function loopbody(urls: string[]) {
   // todo カウンターを入れて一度表示されたニュースは出てこないようにする
-  let tempNewsgroup: News[] = [{}];
+  let tempNewsgroup: News[] = [];
   var yesterday = new Date();
   yesterday.setHours(yesterday.getHours() - 6);
   let yesterdayNum = yesterday.getTime();
@@ -51,10 +55,17 @@ async function loopbody(urls: string[]) {
           let content = `${title.textContent} ${provider}(${japandate.getDate()}日${japandate.getHours()}:${('00' + japandate.getMinutes()).slice(-2)})`;
 
           if (title && description && link && japandate.getTime() > yesterdayNum) {
-            let news: News = {
-              "title": content,
-              "description": description,
-              "link": link
+            let foundnews = newsgroup.find(news => news.title === content);
+            let news;
+            if (foundnews) {
+              news = JSON.parse(JSON.stringify(foundnews));
+            } else {
+              news = {
+                "title": content,
+                "description": description,
+                "link": link,
+                "count": 0
+              };
             };
             tempNewsgroup.push(news);
           } else {
@@ -69,22 +80,29 @@ async function loopbody(urls: string[]) {
 }
 
 async function showLatestNews() {
-  let idx = Math.floor(Math.random() * newsgroup.length);
-  let rssTitle: string;
   // todo 非同期でデータが収集できるまで待つ
-  if (newsgroup[idx]["title"]) {
-    rssTitle = `$(octoface) ` + newsgroup[idx]["title"];
+  let check = setInterval(() => {
+    if (newsgroup.length > 0) {
+      clearInterval(check);
+    }
+  }, 100);
+  let filteredNewsgroup = newsgroup.filter(news => news.count === Math.min(...newsgroup.map((p) => p.count)));
+  let idx = Math.floor(Math.random() * filteredNewsgroup.length);
+  let rssTitle: string;
+  if (filteredNewsgroup[idx]["title"]) {
+    rssTitle = `$(octoface) ` + filteredNewsgroup[idx]["title"];
   } else {
     rssTitle = `$(octoface) ` + `ニュース取得中...`;
   }
   const title = rssTitle ? rssTitle : "unknown";
 
-  currentHeadline = newsgroup[idx]["link"];
+  currentHeadline = filteredNewsgroup[idx]["link"];
   myStatusBarItem.text = title;
-  myStatusBarItem.tooltip = newsgroup[idx]["description"];
+  myStatusBarItem.tooltip = filteredNewsgroup[idx]["description"];
   myStatusBarItem.name = "ニュース速報";
   myStatusBarItem.command = "vscode-NewsHeadline.openlink";
   myStatusBarItem.show();
+  newsgroup[idx]["count"] += 1;
 }
 
 async function getLatestNews() {
@@ -110,8 +128,8 @@ export async function activate(context: vscode.ExtensionContext) {
   myStatusBarItem.show();
   await getLatestNews();
   showLatestNews();
-  setInterval(getLatestNews, 600000);
-  setInterval(showLatestNews, 30000);
+  setInterval(getLatestNews, 60_000);
+  setInterval(showLatestNews, 10_000);
 
   context.subscriptions.push(disposable1);
   context.subscriptions.push(myStatusBarItem);
