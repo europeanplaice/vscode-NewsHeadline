@@ -12,6 +12,7 @@ interface News {
 let newsgroup: News[] = [{}];
 
 async function loopbody(urls: string[]) {
+  // todo カウンターを入れて一度表示されたニュースは出てこないようにする
   let tempNewsgroup: News[] = [{}];
   var yesterday = new Date();
   yesterday.setHours(yesterday.getHours() - 6);
@@ -45,11 +46,7 @@ async function loopbody(urls: string[]) {
           let description = item.querySelector("description")?.textContent;
           let link: string | null | undefined;
           let provider: string = "(NHK)";
-          link = item.querySelector("guid")?.textContent;
-          if (!link) {
-            provider = "";
-            link = item.querySelector("link")?.textContent;
-          }
+          link = item.querySelector("link")?.textContent;
 
           let content = `${title.textContent} ${provider}(${japandate.getDate()}日${japandate.getHours()}:${('00' + japandate.getMinutes()).slice(-2)})`;
 
@@ -68,12 +65,18 @@ async function loopbody(urls: string[]) {
   }
   console.log("update");
   newsgroup = await JSON.parse(JSON.stringify(tempNewsgroup));
-  return newsgroup;
+  return;
 }
 
-async function showLatestNews(newsgroup: News[]) {
+async function showLatestNews() {
   let idx = Math.floor(Math.random() * newsgroup.length);
-  let rssTitle = `$(octoface) ` + newsgroup[idx]["title"];
+  let rssTitle: string;
+  // todo 非同期でデータが収集できるまで待つ
+  if (newsgroup[idx]["title"]) {
+    rssTitle = `$(octoface) ` + newsgroup[idx]["title"];
+  } else {
+    rssTitle = `$(octoface) ` + `ニュース取得中...`;
+  }
   const title = rssTitle ? rssTitle : "unknown";
 
   currentHeadline = newsgroup[idx]["link"];
@@ -103,12 +106,12 @@ export async function activate(context: vscode.ExtensionContext) {
   });
 
   myStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1);
-  myStatusBarItem.text = "ニュース取得中...";
+  myStatusBarItem.text = `$(octoface) ニュース取得中...`;
   myStatusBarItem.show();
   await getLatestNews();
-  showLatestNews(newsgroup);
+  showLatestNews();
   setInterval(getLatestNews, 600000);
-  setInterval(showLatestNews, 45000, newsgroup);
+  setInterval(showLatestNews, 30000);
 
   context.subscriptions.push(disposable1);
   context.subscriptions.push(myStatusBarItem);
