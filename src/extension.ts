@@ -73,7 +73,7 @@ async function loopbody(urls: string[]) {
 
 async function showLatestNews(newsgroup: News[]) {
 	let idx = Math.floor(Math.random() * newsgroup.length);
-	let rssTitle = `$(eye)` + newsgroup[idx]["title"];
+	let rssTitle = `$(book)` + newsgroup[idx]["title"];
 	const title = rssTitle ? rssTitle : "unknown";
 
 	currentHeadline = newsgroup[idx]["link"];
