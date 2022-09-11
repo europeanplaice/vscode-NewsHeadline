@@ -18,7 +18,6 @@ let newsgroup: News[] = [];
 
 async function loopbody(urls: [string, string][]) {
   // todo カウンターを入れて一度表示されたニュースは出てこないようにする
-  let tempNewsgroup: News[] = [];
   var yesterday = new Date();
   yesterday.setHours(yesterday.getHours() - 6);
   let yesterdayNum = yesterday.getTime();
@@ -57,28 +56,25 @@ async function loopbody(urls: [string, string][]) {
 
           if (title && description && link && japandate.getTime() > yesterdayNum) {
             let foundnews = newsgroup.find(news => news.title === content);
-            let news;
             if (foundnews) {
-              news = JSON.parse(JSON.stringify(foundnews));
             } else {
-              news = {
+              let news: News = {
                 "title": content,
                 "description": description,
                 "link": link,
                 "date": japandate,
                 "count": 0
               };
+              newsgroup.push(news);
             };
-            tempNewsgroup.push(news);
             console.log("getnews");
-            console.log(news);
           } else {
           }
         });
       });
   }
-  console.log(`updated. The number of news is ${tempNewsgroup.length}`);
-  newsgroup = await JSON.parse(JSON.stringify(tempNewsgroup));
+  newsgroup = newsgroup.filter(news => news.date.getTime() > yesterdayNum);
+  console.log(`updated. The number of news is ${newsgroup.length}`);
   return;
 }
 
@@ -155,8 +151,8 @@ export async function activate(context: vscode.ExtensionContext) {
   myStatusBarItem.show();
   getLatestNews();
   showLatestNews();
-  setInterval(getLatestNews, 120_000);
-  setInterval(showLatestNews, 30_000);
+  setInterval(getLatestNews, 15_000);
+  setInterval(showLatestNews, 2_000);
 
   context.subscriptions.push(disposable1);
   context.subscriptions.push(myStatusBarItem);
