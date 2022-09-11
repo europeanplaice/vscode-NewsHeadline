@@ -154,8 +154,8 @@ export async function activate(context: vscode.ExtensionContext) {
   myStatusBarItem.show();
   getLatestNews();
   showLatestNews();
-  setInterval(getLatestNews, 15_000);
-  setInterval(showLatestNews, 2_000);
+  setInterval(getLatestNews, 600_000);
+  setInterval(showLatestNews, 30_000);
 
   context.subscriptions.push(disposable1);
   context.subscriptions.push(myStatusBarItem);
