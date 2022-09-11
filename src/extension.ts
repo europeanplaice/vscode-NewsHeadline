@@ -102,10 +102,16 @@ function showLatestNews() {
   console.log(selectedNews);
   let rssTitle: string;
   let rawtitle = selectedNews["title"];
-  if (selectedNews["title"]) {
-    rssTitle = `$(octoface) ` + selectedNews["title"];
+  let icon: string = `$(octoface) `;
+  if (selectedNews["count"] === 0) {
+    icon = `$(zap) `;
   } else {
-    rssTitle = `$(octoface) ` + `ニュース取得中...`;
+    icon = `$(octoface) `;
+  }
+  if (selectedNews["title"]) {
+    rssTitle = icon + selectedNews["title"];
+  } else {
+    rssTitle = icon + `ニュース取得中...`;
   }
   const title = rssTitle ? rssTitle : "unknown";
 
