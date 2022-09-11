@@ -138,9 +138,6 @@ async function getLatestNews() {
     ["https://www.nhk.or.jp/rss/news/cat4.xml", "NHK"],
     ["https://www.nhk.or.jp/rss/news/cat5.xml", "NHK"],
     ["https://www.nhk.or.jp/rss/news/cat6.xml", "NHK"],
-    ["https://news.yahoo.co.jp/rss/media/kyodonews/all.xml", "Y!"],
-    ["https://news.yahoo.co.jp/rss/media/aptsushinv/all.xml", "Y!"],
-    ["https://news.yahoo.co.jp/rss/media/rab/all.xml", "Y!"],
   ];
 
   await loopbody(urls);
