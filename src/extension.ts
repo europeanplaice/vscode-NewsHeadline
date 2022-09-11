@@ -10,6 +10,7 @@ type News = {
   title: string;
   description: string;
   link: string;
+  date: Date;
   count: number;
 };
 
@@ -64,6 +65,7 @@ async function loopbody(urls: [string, string][]) {
                 "title": content,
                 "description": description,
                 "link": link,
+                "date": japandate,
                 "count": 0
               };
             };
@@ -80,34 +82,51 @@ async function loopbody(urls: [string, string][]) {
   return;
 }
 
-async function showLatestNews() {
+function showLatestNews() {
   // todo 非同期でデータが収集できるまで待つ
-  let check = setInterval(() => {
-    if (newsgroup.length > 0) {
-      clearInterval(check);
-    }
-  }, 100);
+  if (newsgroup.length === 0) {
+    let check = setInterval(() => {
+      myStatusBarItem.text = `$(octoface) ` + `ニュース取得中...`;;
+      myStatusBarItem.show();
+      console.log("interval");
+      if (newsgroup.length > 0) {
+        clearInterval(check);
+      }
+    }, 100);
+  }
   let filteredNewsgroup = newsgroup.filter(news => news.count === Math.min(...newsgroup.map((p) => p.count)));
+  let selectedNews = filteredNewsgroup.find(news => 
+    new Date(news.date).getTime() === Math.max(...filteredNewsgroup.map((p) => new Date(p.date).getTime()))
+  );
+  if (!selectedNews) {
+    console.log("selectedNews not found");
+    return;
+  }
   console.log(`The number of filteredNewsgroup is ${filteredNewsgroup.length}`);
-  let idx = Math.floor(Math.random() * filteredNewsgroup.length);
-  console.log(filteredNewsgroup[idx]);
+  console.log(selectedNews);
   let rssTitle: string;
-  if (filteredNewsgroup[idx]["title"]) {
-    rssTitle = `$(octoface) ` + filteredNewsgroup[idx]["title"];
+  let rawtitle = selectedNews["title"];
+  if (selectedNews["title"]) {
+    rssTitle = `$(octoface) ` + selectedNews["title"];
   } else {
     rssTitle = `$(octoface) ` + `ニュース取得中...`;
   }
   const title = rssTitle ? rssTitle : "unknown";
 
-  currentLink = filteredNewsgroup[idx]["link"];
+  currentLink = selectedNews["link"];
   myStatusBarItem.text = title;
-  myStatusBarItem.tooltip = filteredNewsgroup[idx]["description"];
+  myStatusBarItem.tooltip = selectedNews["description"];
   myStatusBarItem.name = "ニュース速報";
   myStatusBarItem.command = "vscode-NewsHeadline.openlink";
   myStatusBarItem.show();
-  let idxUnfiltered = newsgroup.findIndex(news => news["title"] === filteredNewsgroup[idx]["title"]);
-  newsgroup[idxUnfiltered]["count"] += 1;
-  console.log("count up");
+  console.log("before count up");
+  let idxUnfiltered = newsgroup.findIndex(news => news["title"] === rawtitle);
+  if (idxUnfiltered === -1) {
+    console.log("not found idxUnfiltered");
+  } else {
+    newsgroup[idxUnfiltered]["count"] += 1;
+    console.log("count up");
+  }
 }
 
 async function getLatestNews() {
@@ -136,8 +155,8 @@ export async function activate(context: vscode.ExtensionContext) {
   myStatusBarItem.show();
   getLatestNews();
   showLatestNews();
-  setInterval(getLatestNews, 60_000);
-  setInterval(showLatestNews, 3_000);
+  setInterval(getLatestNews, 120_000);
+  setInterval(showLatestNews, 30_000);
 
   context.subscriptions.push(disposable1);
   context.subscriptions.push(myStatusBarItem);
