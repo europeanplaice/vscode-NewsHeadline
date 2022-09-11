@@ -12,17 +12,24 @@ type News = {
   link: string;
   date: Date;
   count: number;
+  priority: number;
+};
+
+type SourceInfo = {
+  url: string;
+  provider: string;
+  category: string;
+  priority: number;
 };
 
 let newsgroup: News[] = [];
 
-async function loopbody(urls: [string, string][]) {
-  // todo カウンターを入れて一度表示されたニュースは出てこないようにする
-  var yesterday = new Date();
-  yesterday.setHours(yesterday.getHours() - 3);
-  let yesterdayNum = yesterday.getTime();
-  for (let url of urls) {
-    await axios.get(url[0])
+async function loopbody(sourceinfos: SourceInfo[]) {
+  var dateThreshold = new Date();
+  dateThreshold.setHours(dateThreshold.getHours() - 6);
+  let dateThresholdNum = dateThreshold.getTime();
+  for (let sourceinfo of sourceinfos) {
+    await axios.get(sourceinfo.url)
       .then(async (res: AxiosResponse<string>) => {
         const jsdom = new JSDOM();
         const parser = new jsdom.window.DOMParser();
@@ -48,13 +55,14 @@ async function loopbody(urls: [string, string][]) {
           japandate.setHours(japandate.getHours() + 9);
 
           let description = item.querySelector("description")?.textContent;
+          description = description ? description : "";
           let link: string | null | undefined;
-          let provider: string = `(${url[1]})`;
+          let provider: string = `(${sourceinfo.provider})`;
           link = item.querySelector("link")?.textContent;
 
           let content = `${title.textContent} ${provider}(${japandate.getDate()}日${japandate.getHours()}:${('00' + japandate.getMinutes()).slice(-2)})`;
 
-          if (title && description && link && japandate.getTime() > yesterdayNum) {
+          if (title && link && japandate.getTime() > dateThresholdNum) {
             let foundnews = newsgroup.find(news => news.title === content);
             if (foundnews) {
             } else {
@@ -63,6 +71,7 @@ async function loopbody(urls: [string, string][]) {
                 "description": description,
                 "link": link,
                 "date": japandate,
+                "priority": sourceinfo.priority,
                 "count": 0
               };
               newsgroup.push(news);
@@ -73,7 +82,7 @@ async function loopbody(urls: [string, string][]) {
         });
       });
   }
-  newsgroup = newsgroup.filter(news => news.date.getTime() > yesterdayNum);
+  newsgroup = newsgroup.filter(news => news.date.getTime() > dateThresholdNum);
   console.log(`updated. The number of news is ${newsgroup.length}`);
   return;
 }
@@ -84,7 +93,6 @@ async function transition(lastnewsTitle: string, latestnewsTitle: string) {
   let latestnewsTitleLength = latestnewsTitle.length;
   for (let i = 0; i < latestnewsTitleLength; i++) {
     let transitionStr = lastnewsTitle.slice(i, i + lastnewsTitleLength) + latestnewsTitle.slice(0, i);
-    // transitionStr = transitionStr.padStart(latestnewsTitleLength, `　`);
     myStatusBarItem.text = transitionStr;
     await wait(25);
     myStatusBarItem.show();
@@ -106,6 +114,7 @@ function showLatestNews() {
     }, 100);
   }
   let filteredNewsgroup = newsgroup.filter(news => news.count === Math.min(...newsgroup.map((p) => p.count)));
+  filteredNewsgroup = filteredNewsgroup.filter(news => news.priority === Math.min(...filteredNewsgroup.map((p) => p.priority)));
   let selectedNews = filteredNewsgroup.find(news => 
     new Date(news.date).getTime() === Math.max(...filteredNewsgroup.map((p) => new Date(p.date).getTime()))
   );
@@ -158,13 +167,55 @@ function showLatestNews() {
 }
 
 async function getLatestNews() {
-  let urls: [string, string][] = [
-    ["https://www.nhk.or.jp/rss/news/cat1.xml", "NHK"],
-    ["https://www.nhk.or.jp/rss/news/cat3.xml", "NHK"],
-    ["https://www.nhk.or.jp/rss/news/cat4.xml", "NHK"],
-    ["https://www.nhk.or.jp/rss/news/cat5.xml", "NHK"],
-    ["https://www.nhk.or.jp/rss/news/cat6.xml", "NHK"],
-    // ["https://news.yahoo.co.jp/rss/media/kyodonews/all.xml", "Y!"],
+  let urls: SourceInfo[] = [
+    {
+      url: "https://www.nhk.or.jp/rss/news/cat0.xml",
+      provider: "NHK",
+      category: "主要ニュース",
+      priority: 1,
+    },
+    {
+      url: "https://www.nhk.or.jp/rss/news/cat1.xml",
+      provider: "NHK",
+      category: "社会",
+      priority: 3,
+    },
+    {
+      url: "https://www.nhk.or.jp/rss/news/cat2.xml",
+      provider: "NHK",
+      category: "文化エンタメ",
+      priority: 3,
+    },
+    {
+      url: "https://www.nhk.or.jp/rss/news/cat3.xml",
+      provider: "NHK",
+      category: "科学医療",
+      priority: 3,
+    },
+    {
+      url: "https://www.nhk.or.jp/rss/news/cat4.xml",
+      provider: "NHK",
+      category: "政治",
+      priority: 2,
+    },
+    {
+      url: "https://www.nhk.or.jp/rss/news/cat5.xml",
+      provider: "NHK",
+      category: "経済",
+      priority: 2,
+    },
+    {
+      url: "https://www.nhk.or.jp/rss/news/cat6.xml",
+      provider: "NHK",
+      category: "国際",
+      priority: 2,
+    },
+    {
+      url: "https://www.nhk.or.jp/rss/news/cat7.xml",
+      provider: "NHK",
+      category: "スポーツ",
+      priority: 3,
+    },
   ];
 
   await loopbody(urls);
@@ -182,7 +233,7 @@ export async function activate(context: vscode.ExtensionContext) {
   getLatestNews();
   showLatestNews();
   setInterval(getLatestNews, 600_000);
-  setInterval(showLatestNews, 30_000);
+  setInterval(showLatestNews, 5_000);
 
   context.subscriptions.push(disposable1);
   context.subscriptions.push(myStatusBarItem);
