@@ -13,6 +13,8 @@ type News = {
   date: Date;
   count: number;
   priority: number;
+  provider: string;
+  category: string;
 };
 
 type SourceInfo = {
@@ -72,6 +74,8 @@ async function loopbody(sourceinfos: SourceInfo[]) {
                 "link": link,
                 "date": japandate,
                 "priority": sourceinfo.priority,
+                "provider": sourceinfo.provider,
+                "category": sourceinfo.category,
                 "count": 0
               };
               newsgroup.push(news);
@@ -140,6 +144,8 @@ function showLatestNews() {
   const title = rssTitle ? rssTitle : "unknown";
 
   currentLink = selectedNews["link"];
+  let provider = selectedNews.provider;
+  let category = selectedNews["category"];
   transition(myStatusBarItem.text, title);
   myStatusBarItem.text = title;
   myStatusBarItem.tooltip = selectedNews["description"];
@@ -232,8 +238,8 @@ export async function activate(context: vscode.ExtensionContext) {
   myStatusBarItem.show();
   getLatestNews();
   showLatestNews();
-  setInterval(getLatestNews, 600_000);
-  setInterval(showLatestNews, 5_000);
+  setInterval(getLatestNews, 300_000);
+  setInterval(showLatestNews, 30_000);
 
   context.subscriptions.push(disposable1);
   context.subscriptions.push(myStatusBarItem);
