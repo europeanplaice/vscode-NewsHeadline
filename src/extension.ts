@@ -19,7 +19,7 @@ let newsgroup: News[] = [];
 async function loopbody(urls: [string, string][]) {
   // todo カウンターを入れて一度表示されたニュースは出てこないようにする
   var yesterday = new Date();
-  yesterday.setHours(yesterday.getHours() - 6);
+  yesterday.setHours(yesterday.getHours() - 3);
   let yesterdayNum = yesterday.getTime();
   for (let url of urls) {
     await axios.get(url[0])
@@ -78,6 +78,21 @@ async function loopbody(urls: [string, string][]) {
   return;
 }
 
+async function transition(lastnewsTitle: string, latestnewsTitle: string) {
+  const wait = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  let lastnewsTitleLength = lastnewsTitle.length;
+  let latestnewsTitleLength = latestnewsTitle.length;
+  for (let i = 0; i < latestnewsTitleLength; i++) {
+    let transitionStr = lastnewsTitle.slice(i, i + lastnewsTitleLength) + latestnewsTitle.slice(0, i);
+    // transitionStr = transitionStr.padStart(latestnewsTitleLength, `　`);
+    myStatusBarItem.text = transitionStr;
+    await wait(25);
+    myStatusBarItem.show();
+  }
+  myStatusBarItem.text = latestnewsTitle;
+  myStatusBarItem.show();
+}
+
 function showLatestNews() {
   // todo 非同期でデータが収集できるまで待つ
   if (newsgroup.length === 0) {
@@ -116,10 +131,21 @@ function showLatestNews() {
   const title = rssTitle ? rssTitle : "unknown";
 
   currentLink = selectedNews["link"];
+  transition(myStatusBarItem.text, title);
   myStatusBarItem.text = title;
   myStatusBarItem.tooltip = selectedNews["description"];
   myStatusBarItem.name = "ニュース速報";
   myStatusBarItem.command = "vscode-NewsHeadline.openlink";
+
+  var thirtyminutes = new Date();
+  thirtyminutes.setMinutes(thirtyminutes.getMinutes() - 30);
+
+  if (selectedNews["date"].getTime() > thirtyminutes.getTime() && selectedNews["count"] === 0) {
+    myStatusBarItem.backgroundColor =
+      new vscode.ThemeColor('statusBarItem.warningBackground');
+  } else {
+    myStatusBarItem.backgroundColor = undefined;
+  }
   myStatusBarItem.show();
   console.log("before count up");
   let idxUnfiltered = newsgroup.findIndex(news => news["title"] === rawtitle);
@@ -138,6 +164,7 @@ async function getLatestNews() {
     ["https://www.nhk.or.jp/rss/news/cat4.xml", "NHK"],
     ["https://www.nhk.or.jp/rss/news/cat5.xml", "NHK"],
     ["https://www.nhk.or.jp/rss/news/cat6.xml", "NHK"],
+    // ["https://news.yahoo.co.jp/rss/media/kyodonews/all.xml", "Y!"],
   ];
 
   await loopbody(urls);
