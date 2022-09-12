@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 let myStatusBarItem: vscode.StatusBarItem;
 import axios, { AxiosResponse } from "axios";
 import { JSDOM } from 'jsdom';
-// var utils = require('./utils');
+var utils = require('./utils');
 
 let currentLink: string;
 
@@ -99,7 +99,7 @@ async function transition(lastnewsTitle: string, latestnewsTitle: string) {
   for (let i = 0; i < latestnewsTitleLength; i++) {
     let transitionStr = lastnewsTitle.slice(i, i + lastnewsTitleLength) + latestnewsTitle.slice(0, i);
     myStatusBarItem.text = transitionStr;
-    await wait(25);
+    await wait(Math.min(1+i*0.5, 30));
     myStatusBarItem.show();
   }
   myStatusBarItem.text = latestnewsTitle;
@@ -142,7 +142,14 @@ function showLatestNews() {
   } else {
     rssTitle = icon + `ニュース取得中...`;
   }
-  const title = rssTitle ? rssTitle : "unknown";
+  var title = rssTitle ? rssTitle : "unknown";
+
+  title = title.replace(" (Reuters Japan) ", "");
+  title = title.replace("(共同通信)", "(共同)");
+  title = title.replace("　", " ");
+  title = title.replace("、", ",");
+  title = utils.Zenkaku2hankaku(title);
+  title = utils.zenkana2Hankana(title);
 
   currentLink = selectedNews["link"];
   let provider = selectedNews.provider;
@@ -155,8 +162,13 @@ function showLatestNews() {
 
   var thirtyminutes = new Date();
   thirtyminutes.setMinutes(thirtyminutes.getMinutes() - 30);
+  var sixtyminutes = new Date();
+  sixtyminutes.setMinutes(sixtyminutes.getMinutes() - 60);
 
   if (selectedNews["date"].getTime() > thirtyminutes.getTime()) {
+    myStatusBarItem.backgroundColor =
+      new vscode.ThemeColor('statusBarItem.warningBackground');
+  } else if (selectedNews["date"].getTime() > sixtyminutes.getTime()){
     myStatusBarItem.backgroundColor =
       new vscode.ThemeColor('statusBarItem.warningBackground');
   } else {
@@ -231,6 +243,12 @@ async function getLatestNews() {
     },
     {
       url: "https://news.google.com/rss/search?q=%E3%83%AD%E3%82%A4%E3%82%BF%E3%83%BC&hl=ja&gl=JP&ceid=JP%3Aja",
+      provider: "G!",
+      category: "",
+      priority: 2,
+    },
+    {
+      url: "https://news.google.com/rss/search?q=%E6%99%82%E4%BA%8B%E9%80%9A%E4%BF%A1&hl=ja&gl=JP&ceid=JP%3Aja",
       provider: "G!",
       category: "",
       priority: 2,
