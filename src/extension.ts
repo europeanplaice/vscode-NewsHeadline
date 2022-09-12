@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 let myStatusBarItem: vscode.StatusBarItem;
 import axios, { AxiosResponse } from "axios";
 import { JSDOM } from 'jsdom';
+// var utils = require('./utils');
 
 let currentLink: string;
 
@@ -155,7 +156,7 @@ function showLatestNews() {
   var thirtyminutes = new Date();
   thirtyminutes.setMinutes(thirtyminutes.getMinutes() - 30);
 
-  if (selectedNews["date"].getTime() > thirtyminutes.getTime() && selectedNews["count"] === 0) {
+  if (selectedNews["date"].getTime() > thirtyminutes.getTime()) {
     myStatusBarItem.backgroundColor =
       new vscode.ThemeColor('statusBarItem.warningBackground');
   } else {
@@ -222,6 +223,18 @@ async function getLatestNews() {
       category: "スポーツ",
       priority: 3,
     },
+    {
+      url: "https://news.yahoo.co.jp/rss/media/kyodonews/all.xml",
+      provider: "Y!",
+      category: "",
+      priority: 2,
+    },
+    {
+      url: "https://news.google.com/rss/search?q=%E3%83%AD%E3%82%A4%E3%82%BF%E3%83%BC&hl=ja&gl=JP&ceid=JP%3Aja",
+      provider: "G!",
+      category: "",
+      priority: 2,
+    },
   ];
 
   await loopbody(urls);
@@ -233,7 +246,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.env.openExternal(vscode.Uri.parse(currentLink));
   });
 
-  myStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1);
+  myStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
   myStatusBarItem.text = `$(octoface) ニュース取得中...`;
   myStatusBarItem.show();
   getLatestNews();
