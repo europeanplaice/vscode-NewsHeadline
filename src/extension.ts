@@ -99,7 +99,7 @@ async function transition(lastnewsTitle: string, latestnewsTitle: string) {
   for (let i = 0; i < latestnewsTitleLength; i++) {
     let transitionStr = lastnewsTitle.slice(i, i + lastnewsTitleLength) + latestnewsTitle.slice(0, i);
     myStatusBarItem.text = transitionStr;
-    await wait(Math.min(1+i*0.5, 30));
+    await wait(Math.min(0.01+i*0.5, 25));
     myStatusBarItem.show();
   }
   myStatusBarItem.text = latestnewsTitle;
@@ -110,7 +110,7 @@ function showLatestNews() {
   // todo 非同期でデータが収集できるまで待つ
   if (newsgroup.length === 0) {
     let check = setInterval(() => {
-      myStatusBarItem.text = `$(octoface) ` + `ニュース取得中...`;;
+      myStatusBarItem.text = `$(octoface) ` + `ニュース取得中...`;
       myStatusBarItem.show();
       console.log("interval");
       if (newsgroup.length > 0) {
@@ -128,7 +128,7 @@ function showLatestNews() {
     return;
   }
   console.log(`The number of filteredNewsgroup is ${filteredNewsgroup.length}`);
-  console.log(selectedNews);
+  console.log(selectedNews.title, selectedNews.date, selectedNews.count);
   let rssTitle: string;
   let rawtitle = selectedNews["title"];
   let icon: string = `$(octoface) `;
@@ -197,61 +197,65 @@ async function getLatestNews() {
       url: "https://www.nhk.or.jp/rss/news/cat1.xml",
       provider: "NHK",
       category: "社会",
-      priority: 3,
+      priority: 1,
     },
     {
       url: "https://www.nhk.or.jp/rss/news/cat2.xml",
       provider: "NHK",
       category: "文化エンタメ",
-      priority: 3,
+      priority: 1,
     },
     {
       url: "https://www.nhk.or.jp/rss/news/cat3.xml",
       provider: "NHK",
       category: "科学医療",
-      priority: 3,
+      priority: 1,
     },
     {
       url: "https://www.nhk.or.jp/rss/news/cat4.xml",
       provider: "NHK",
       category: "政治",
-      priority: 2,
+      priority: 1,
     },
     {
       url: "https://www.nhk.or.jp/rss/news/cat5.xml",
       provider: "NHK",
       category: "経済",
-      priority: 2,
+      priority: 1,
     },
     {
       url: "https://www.nhk.or.jp/rss/news/cat6.xml",
       provider: "NHK",
       category: "国際",
-      priority: 2,
+      priority: 1,
     },
     {
       url: "https://www.nhk.or.jp/rss/news/cat7.xml",
       provider: "NHK",
       category: "スポーツ",
-      priority: 3,
+      priority: 1,
     },
     {
       url: "https://news.yahoo.co.jp/rss/media/kyodonews/all.xml",
       provider: "Y!",
       category: "",
-      priority: 2,
+      priority: 1,
     },
+
+    // ロイター
     {
-      url: "https://news.google.com/rss/search?q=%E3%83%AD%E3%82%A4%E3%82%BF%E3%83%BC&hl=ja&gl=JP&ceid=JP%3Aja",
+      url: "https://news.google.com/rss/search?q=inurl:https://jp.reuters.com&hl=ja&gl=JP&ceid=JP%3Aja",
       provider: "G!",
       category: "",
-      priority: 2,
+      priority: 1,
     },
+
+    // 日経新聞
     {
-      url: "https://news.google.com/rss/search?q=%E6%99%82%E4%BA%8B%E9%80%9A%E4%BF%A1&hl=ja&gl=JP&ceid=JP%3Aja",
+      url: "https://news.google.com/rss/search?q=inurl:https://www.nikkei.com&hl=ja&gl=JP&ceid=JP%3Aja",
       provider: "G!",
       category: "",
-      priority: 2,
+      priority: 1,
     },
   ];
 
@@ -269,8 +273,8 @@ export async function activate(context: vscode.ExtensionContext) {
   myStatusBarItem.show();
   getLatestNews();
   showLatestNews();
-  setInterval(getLatestNews, 300_000);
-  setInterval(showLatestNews, 30_000);
+  setInterval(getLatestNews, 60_000);
+  setInterval(showLatestNews, 10_000);
 
   context.subscriptions.push(disposable1);
   context.subscriptions.push(myStatusBarItem);
