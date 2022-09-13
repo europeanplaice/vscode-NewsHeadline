@@ -16,6 +16,7 @@ type News = {
   priority: number;
   provider: string;
   category: string;
+  lastRead: Date | null;
 };
 
 type SourceInfo = {
@@ -77,7 +78,8 @@ async function loopbody(sourceinfos: SourceInfo[]) {
                 "priority": sourceinfo.priority,
                 "provider": sourceinfo.provider,
                 "category": sourceinfo.category,
-                "count": 0
+                "count": 0,
+                "lastRead": null
               };
               newsgroup.push(news);
             };
@@ -108,81 +110,97 @@ async function transition(lastnewsTitle: string, latestnewsTitle: string) {
 
 function showLatestNews() {
   // todo 非同期でデータが収集できるまで待つ
-  if (newsgroup.length === 0) {
-    let check = setInterval(() => {
-      myStatusBarItem.text = `$(octoface) ` + `ニュース取得中...`;
-      myStatusBarItem.show();
-      console.log("interval");
-      if (newsgroup.length > 0) {
-        clearInterval(check);
-      }
-    }, 100);
-  }
-  let filteredNewsgroup = newsgroup.filter(news => news.count === Math.min(...newsgroup.map((p) => p.count)));
-  filteredNewsgroup = filteredNewsgroup.filter(news => news.priority === Math.min(...filteredNewsgroup.map((p) => p.priority)));
-  let selectedNews = filteredNewsgroup.find(news => 
-    new Date(news.date).getTime() === Math.max(...filteredNewsgroup.map((p) => new Date(p.date).getTime()))
-  );
-  if (!selectedNews) {
-    console.log("selectedNews not found");
-    return;
-  }
-  console.log(`The number of filteredNewsgroup is ${filteredNewsgroup.length}`);
-  console.log(selectedNews.title, selectedNews.date, selectedNews.count);
-  let rssTitle: string;
-  let rawtitle = selectedNews["title"];
-  let icon: string = `$(octoface) `;
-  if (selectedNews["count"] === 0) {
-    icon = `$(zap) `;
-  } else {
-    icon = `$(octoface) `;
-  }
-  if (selectedNews["title"]) {
-    rssTitle = icon + selectedNews["title"];
-  } else {
-    rssTitle = icon + `ニュース取得中...`;
-  }
-  var title = rssTitle ? rssTitle : "unknown";
-
-  title = title.replace(" (Reuters Japan) ", "");
-  title = title.replace("(共同通信)", "(共同)");
-  title = title.replace("　", " ");
-  title = title.replace("、", ",");
-  title = utils.Zenkaku2hankaku(title);
-  title = utils.zenkana2Hankana(title);
-
-  currentLink = selectedNews["link"];
-  let provider = selectedNews.provider;
-  let category = selectedNews["category"];
-  transition(myStatusBarItem.text, title);
-  myStatusBarItem.text = title;
-  myStatusBarItem.tooltip = selectedNews["description"];
-  myStatusBarItem.name = "ニュース速報";
-  myStatusBarItem.command = "vscode-NewsHeadline.openlink";
-
-  var thirtyminutes = new Date();
-  thirtyminutes.setMinutes(thirtyminutes.getMinutes() - 30);
-  var sixtyminutes = new Date();
-  sixtyminutes.setMinutes(sixtyminutes.getMinutes() - 60);
-
-  if (selectedNews["date"].getTime() > thirtyminutes.getTime()) {
-    myStatusBarItem.backgroundColor =
-      new vscode.ThemeColor('statusBarItem.warningBackground');
-  } else if (selectedNews["date"].getTime() > sixtyminutes.getTime()){
-    myStatusBarItem.backgroundColor =
-      new vscode.ThemeColor('statusBarItem.warningBackground');
-  } else {
-    myStatusBarItem.backgroundColor = undefined;
-  }
-  myStatusBarItem.show();
-  console.log("before count up");
-  let idxUnfiltered = newsgroup.findIndex(news => news["title"] === rawtitle);
-  if (idxUnfiltered === -1) {
-    console.log("not found idxUnfiltered");
-  } else {
-    newsgroup[idxUnfiltered]["count"] += 1;
-    console.log("count up");
-  }
+  new Promise<void>((resolve) => {
+    if (newsgroup.length === 0) {
+      let check = setInterval(() => {
+        myStatusBarItem.text = `$(octoface) ` + `ニュース取得中...`;
+        myStatusBarItem.show();
+        console.log("interval");
+        if (newsgroup.length > 0) {
+          console.log("news found after wait " + newsgroup.length);
+          clearInterval(check);
+          resolve();
+        }
+      }, 100);
+    } else {
+      resolve();
+    }
+  }).then(() => {
+    let filteredNewsgroup = newsgroup.filter(news => news.count === Math.min(...newsgroup.map((p) => p.count)));
+    filteredNewsgroup = filteredNewsgroup.filter(news => news.priority === Math.min(...filteredNewsgroup.map((p) => p.priority)));
+    let selectedNews: News | undefined;
+    if (filteredNewsgroup.length > 0 && filteredNewsgroup[0].count > 0) {
+      // 二週目以降は最後に読まれた時間が一番遅い記事を表示する
+      selectedNews = filteredNewsgroup.find(news => 
+        new Date(news.lastRead ? news.lastRead : "").getTime() === Math.min(...filteredNewsgroup.map((p) => new Date(p.lastRead ? p.lastRead : "").getTime()))
+      );
+    } else {
+      selectedNews = filteredNewsgroup.find(news => 
+        new Date(news.date).getTime() === Math.max(...filteredNewsgroup.map((p) => new Date(p.date).getTime()))
+      );
+    }
+    if (!selectedNews) {
+      console.log("selectedNews not found");
+      return;
+    }
+    console.log(`The number of filteredNewsgroup is ${filteredNewsgroup.length}`);
+    console.log(selectedNews.title, selectedNews.date, selectedNews.count);
+    let rssTitle: string;
+    let rawtitle = selectedNews["title"];
+    let icon: string = `$(octoface) `;
+    if (selectedNews["count"] === 0) {
+      icon = `$(zap) `;
+    } else {
+      icon = `$(octoface) `;
+    }
+    if (selectedNews["title"]) {
+      rssTitle = icon + selectedNews["title"];
+    } else {
+      rssTitle = icon + `ニュース取得中...`;
+    }
+    var title = rssTitle ? rssTitle : "unknown";
+  
+    title = title.replace(" (Reuters Japan) ", "");
+    title = title.replace("(共同通信)", "(共同)");
+    title = title.replace("　", " ");
+    title = title.replace("、", ",");
+    title = utils.Zenkaku2hankaku(title);
+    title = utils.zenkana2Hankana(title);
+  
+    currentLink = selectedNews["link"];
+    let provider = selectedNews.provider;
+    let category = selectedNews["category"];
+    transition(myStatusBarItem.text, title);
+    myStatusBarItem.text = title;
+    myStatusBarItem.tooltip = selectedNews["description"];
+    myStatusBarItem.name = "ニュース速報";
+    myStatusBarItem.command = "vscode-NewsHeadline.openlink";
+  
+    var thirtyminutes = new Date();
+    thirtyminutes.setMinutes(thirtyminutes.getMinutes() - 30);
+    var sixtyminutes = new Date();
+    sixtyminutes.setMinutes(sixtyminutes.getMinutes() - 60);
+  
+    if (selectedNews["date"].getTime() > thirtyminutes.getTime()) {
+      myStatusBarItem.backgroundColor =
+        new vscode.ThemeColor('statusBarItem.warningBackground');
+    } else if (selectedNews["date"].getTime() > sixtyminutes.getTime()){
+      myStatusBarItem.backgroundColor =
+        new vscode.ThemeColor('statusBarItem.warningBackground');
+    } else {
+      myStatusBarItem.backgroundColor = undefined;
+    }
+    myStatusBarItem.show();
+    console.log("before count up");
+    let idxUnfiltered = newsgroup.findIndex(news => news["title"] === rawtitle);
+    if (idxUnfiltered === -1) {
+      console.log("not found idxUnfiltered");
+    } else {
+      newsgroup[idxUnfiltered]["count"] += 1;
+      newsgroup[idxUnfiltered]["lastRead"] = new Date();
+      console.log("count up");
+    }
+  });
 }
 
 async function getLatestNews() {
@@ -273,8 +291,8 @@ export async function activate(context: vscode.ExtensionContext) {
   myStatusBarItem.show();
   getLatestNews();
   showLatestNews();
-  setInterval(getLatestNews, 60_000);
-  setInterval(showLatestNews, 10_000);
+  setInterval(getLatestNews, 180_000);
+  setInterval(showLatestNews, 30_000);
 
   context.subscriptions.push(disposable1);
   context.subscriptions.push(myStatusBarItem);
