@@ -5,12 +5,23 @@ import { JSDOM } from 'jsdom';
 var utils = require('./utils');
 
 let currentLink: string;
+let showlength = 50;
+
+type FullTitle = {
+  icon: string,
+  title: string,
+  dateInfo: string
+};
+
+function renderFullTitle(fulltitle: FullTitle) {
+  return `${fulltitle.icon} ${fulltitle.title} ${fulltitle.dateInfo}`;
+}
 
 type News = {
   title: string;
   description: string;
   link: string;
-  date: Date;
+  localdate: Date;
   count: number;
   priority: number;
   lastRead: Date | null;
@@ -32,12 +43,14 @@ async function loopbody(sourceinfos: SourceInfo[]) {
       .then(async (res: AxiosResponse<string>) => {
         const jsdom = new JSDOM();
         const parser = new jsdom.window.DOMParser();
-        const doc = parser.parseFromString(await res["data"], "text/xml");
+        const doc = parser.parseFromString(res["data"], "text/xml");
         doc.documentElement.querySelectorAll("item").forEach((item) => {
           let pubdate = item.querySelector("pubDate");
           if (!pubdate) { return; };
           let title = item.querySelector("title");
           if (!title) { return; };
+          let titleString = title.textContent;
+          if (!titleString) { return; };
           if (!pubdate.textContent) { return; };
           let datestring = pubdate.textContent;
           if (!title.textContent) { return; };
@@ -58,17 +71,15 @@ async function loopbody(sourceinfos: SourceInfo[]) {
           let link: string | null | undefined;
           link = item.querySelector("link")?.textContent;
 
-          let content = `${title.textContent.slice(0, 40)} (${localdate.getHours()}:${('00' + localdate.getMinutes()).slice(-2)} ${new Intl.DateTimeFormat('en-US', { month: 'short'}).format(localdate)} ${localdate.getDate()})`;
-
           if (title && link && localdate.getTime() > dateThresholdNum) {
-            let foundnews = newsgroup.find(news => news.title === content);
+            let foundnews = newsgroup.find(news => news.title === titleString);
             if (foundnews) {
             } else {
               let news: News = {
-                "title": content,
+                "title": title.textContent,
                 "description": description,
                 "link": link,
-                "date": localdate,
+                "localdate": localdate,
                 "priority": sourceinfo.priority,
                 "count": 0,
                 "lastRead": null
@@ -81,22 +92,42 @@ async function loopbody(sourceinfos: SourceInfo[]) {
         });
       });
   }
-  newsgroup = newsgroup.filter(news => news.date.getTime() > dateThresholdNum);
+  newsgroup = newsgroup.filter(news => news.localdate.getTime() > dateThresholdNum);
   console.log(`updated. The number of news is ${newsgroup.length}`);
   return;
 }
 
-async function transition(lastnewsTitle: string, latestnewsTitle: string) {
+async function longTitleMove(fulltitle: FullTitle) {
+  let fullTitleString = fulltitle.title;
+  const wait = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  for (let i = 0; i < fullTitleString.length - showlength + 2; i++) {
+    let transitionStr = fullTitleString.slice(i, i + showlength);
+    fulltitle.title = transitionStr;
+    myStatusBarItem.text = renderFullTitle(fulltitle);
+    await wait(100);
+    myStatusBarItem.show();
+    if (i === 0) {
+      await wait(2000);
+    }
+  }
+  myStatusBarItem.text = renderFullTitle(fulltitle);
+  myStatusBarItem.show();
+}
+
+async function transition(lastnewsTitle: string, latestnewsTitle: FullTitle) {
+  let fullTitleString = latestnewsTitle.title;
   const wait = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
   let lastnewsTitleLength = lastnewsTitle.length;
-  let latestnewsTitleLength = latestnewsTitle.length;
+  let latestnewsTitleLength = latestnewsTitle.title.length;
   for (let i = 0; i < latestnewsTitleLength; i++) {
-    let transitionStr = lastnewsTitle.slice(i, i + lastnewsTitleLength) + latestnewsTitle.slice(0, i);
-    myStatusBarItem.text = transitionStr;
-    await wait(Math.min(0.01+i*0.5, 25));
+    let transitionStr = lastnewsTitle.slice(i, i + lastnewsTitleLength) + latestnewsTitle.title.slice(0, i);
+    latestnewsTitle.title = transitionStr.slice(0, showlength);
+    myStatusBarItem.text = renderFullTitle(latestnewsTitle);
+    await wait(Math.min(0.01 + i * 0.5, 25));
     myStatusBarItem.show();
   }
-  myStatusBarItem.text = latestnewsTitle;
+  latestnewsTitle.title = fullTitleString.slice(0, showlength);
+  myStatusBarItem.text = renderFullTitle(latestnewsTitle);
   myStatusBarItem.show();
 }
 
@@ -123,12 +154,12 @@ function showLatestNews() {
     let selectedNews: News | undefined;
     if (filteredNewsgroup.length > 0 && filteredNewsgroup[0].count > 0) {
       // 二週目以降は最後に読まれた時間が一番遅い記事を表示する
-      selectedNews = filteredNewsgroup.find(news => 
+      selectedNews = filteredNewsgroup.find(news =>
         new Date(news.lastRead ? news.lastRead : "").getTime() === Math.min(...filteredNewsgroup.map((p) => new Date(p.lastRead ? p.lastRead : "").getTime()))
       );
     } else {
-      selectedNews = filteredNewsgroup.find(news => 
-        new Date(news.date).getTime() === Math.max(...filteredNewsgroup.map((p) => new Date(p.date).getTime()))
+      selectedNews = filteredNewsgroup.find(news =>
+        new Date(news.localdate).getTime() === Math.max(...filteredNewsgroup.map((p) => new Date(p.localdate).getTime()))
       );
     }
     if (!selectedNews) {
@@ -136,51 +167,59 @@ function showLatestNews() {
       return;
     }
     console.log(`The number of filteredNewsgroup is ${filteredNewsgroup.length}`);
-    console.log(selectedNews.title, selectedNews.date, selectedNews.count);
-    let rssTitle: string;
-    let rawtitle = selectedNews["title"];
+    console.log(selectedNews.title, selectedNews.localdate, selectedNews.count);
     let icon: string = `$(octoface) `;
     if (selectedNews["count"] === 0) {
       icon = `$(zap) `;
     } else {
       icon = `$(octoface) `;
     }
+
+    let rawtitle: string;
     if (selectedNews["title"]) {
-      rssTitle = icon + selectedNews["title"];
+      rawtitle = selectedNews["title"];
     } else {
-      rssTitle = icon + `ニュース取得中...`;
+      rawtitle = `News collecting...`;
     }
-    var title = rssTitle ? rssTitle : "unknown";
-  
-    title = title.replace(" (Reuters Japan) ", "");
-    title = title.replace("(共同通信)", "(共同)");
+
+    let title = rawtitle;
+    let localdate = selectedNews["localdate"];
+    let dateInfo = `(${localdate.getHours()}:${('00' + localdate.getMinutes()).slice(-2)} ${new Intl.DateTimeFormat('en-US', { month: 'short' }).format(localdate)} ${localdate.getDate()})`
+
     title = title.replace("　", " ");
     title = title.replace("、", ",");
     title = utils.Zenkaku2hankaku(title);
     title = utils.zenkana2Hankana(title);
-  
+
+    let fulltitle: FullTitle = {
+      icon: icon,
+      title: title,
+      dateInfo: dateInfo
+    };
+
     currentLink = selectedNews["link"];
-    transition(myStatusBarItem.text, title);
-    myStatusBarItem.text = title;
-    myStatusBarItem.tooltip = selectedNews["description"];
+    myStatusBarItem.tooltip = new vscode.MarkdownString(selectedNews["description"]);
     myStatusBarItem.name = "ニュース速報";
     myStatusBarItem.command = "vscode-NewsHeadline.openlink";
-  
+    myStatusBarItem.show();
+    // transition(myStatusBarItem.text, fulltitle);
+    longTitleMove(fulltitle);
+    // myStatusBarItem.text = title;
+
     var thirtyminutes = new Date();
     thirtyminutes.setMinutes(thirtyminutes.getMinutes() - 30);
     var sixtyminutes = new Date();
     sixtyminutes.setMinutes(sixtyminutes.getMinutes() - 60);
-  
-    if (selectedNews["date"].getTime() > thirtyminutes.getTime()) {
+
+    if (selectedNews["localdate"].getTime() > thirtyminutes.getTime()) {
       myStatusBarItem.backgroundColor =
         new vscode.ThemeColor('statusBarItem.warningBackground');
-    } else if (selectedNews["date"].getTime() > sixtyminutes.getTime()){
+    } else if (selectedNews["localdate"].getTime() > sixtyminutes.getTime()) {
       myStatusBarItem.backgroundColor =
         new vscode.ThemeColor('statusBarItem.warningBackground');
     } else {
       myStatusBarItem.backgroundColor = undefined;
     }
-    myStatusBarItem.show();
     console.log("before count up");
     let idxUnfiltered = newsgroup.findIndex(news => news["title"] === rawtitle);
     if (idxUnfiltered === -1) {
