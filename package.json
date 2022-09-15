@@ -19,7 +19,17 @@
         "command": "vscode-newsheadline.helloWorld",
         "title": "Hello World"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "vscode-NewsHeadline",
+      "properties": {
+        "vscode-NewsHeadline.newsSource": {
+          "type": "array",
+          "default": ["https://www.nhk.or.jp/rss/news/cat0.xml"],
+          "description": "News Sources"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

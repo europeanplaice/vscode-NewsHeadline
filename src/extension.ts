@@ -6,7 +6,6 @@ var utils = require('./utils');
 
 let currentLink: string;
 
-
 type News = {
   title: string;
   description: string;
@@ -14,15 +13,11 @@ type News = {
   date: Date;
   count: number;
   priority: number;
-  provider: string;
-  category: string;
   lastRead: Date | null;
 };
 
 type SourceInfo = {
   url: string;
-  provider: string;
-  category: string;
   priority: number;
 };
 
@@ -55,18 +50,17 @@ async function loopbody(sourceinfos: SourceInfo[]) {
             date.getUTCMinutes(),
             date.getUTCSeconds()
           );
-          let japandate = new Date(utcdate);
-          japandate.setHours(japandate.getHours() + 9);
+          let localdate = new Date(utcdate);
+          localdate.setMinutes(localdate.getMinutes() - new Date().getTimezoneOffset());
 
           let description = item.querySelector("description")?.textContent;
           description = description ? description : "";
           let link: string | null | undefined;
-          let provider: string = `(${sourceinfo.provider})`;
           link = item.querySelector("link")?.textContent;
 
-          let content = `${title.textContent} ${provider}(${japandate.getDate()}日${japandate.getHours()}:${('00' + japandate.getMinutes()).slice(-2)})`;
+          let content = `${title.textContent.slice(0, 40)} (${localdate.getHours()}:${('00' + localdate.getMinutes()).slice(-2)} ${new Intl.DateTimeFormat('en-US', { month: 'short'}).format(localdate)} ${localdate.getDate()})`;
 
-          if (title && link && japandate.getTime() > dateThresholdNum) {
+          if (title && link && localdate.getTime() > dateThresholdNum) {
             let foundnews = newsgroup.find(news => news.title === content);
             if (foundnews) {
             } else {
@@ -74,10 +68,8 @@ async function loopbody(sourceinfos: SourceInfo[]) {
                 "title": content,
                 "description": description,
                 "link": link,
-                "date": japandate,
+                "date": localdate,
                 "priority": sourceinfo.priority,
-                "provider": sourceinfo.provider,
-                "category": sourceinfo.category,
                 "count": 0,
                 "lastRead": null
               };
@@ -168,8 +160,6 @@ function showLatestNews() {
     title = utils.zenkana2Hankana(title);
   
     currentLink = selectedNews["link"];
-    let provider = selectedNews.provider;
-    let category = selectedNews["category"];
     transition(myStatusBarItem.text, title);
     myStatusBarItem.text = title;
     myStatusBarItem.tooltip = selectedNews["description"];
@@ -204,78 +194,17 @@ function showLatestNews() {
 }
 
 async function getLatestNews() {
-  let urls: SourceInfo[] = [
-    {
-      url: "https://www.nhk.or.jp/rss/news/cat0.xml",
-      provider: "NHK",
-      category: "主要ニュース",
+  const configUrls: string[] | undefined = vscode.workspace.getConfiguration('vscode-NewsHeadline').get("newsSource");
+  if (!configUrls) {
+    return;
+  }
+  let urls: SourceInfo[] = [];
+  for (let configUrl of configUrls) {
+    urls.push({
+      url: configUrl,
       priority: 1,
-    },
-    {
-      url: "https://www.nhk.or.jp/rss/news/cat1.xml",
-      provider: "NHK",
-      category: "社会",
-      priority: 1,
-    },
-    {
-      url: "https://www.nhk.or.jp/rss/news/cat2.xml",
-      provider: "NHK",
-      category: "文化エンタメ",
-      priority: 1,
-    },
-    {
-      url: "https://www.nhk.or.jp/rss/news/cat3.xml",
-      provider: "NHK",
-      category: "科学医療",
-      priority: 1,
-    },
-    {
-      url: "https://www.nhk.or.jp/rss/news/cat4.xml",
-      provider: "NHK",
-      category: "政治",
-      priority: 1,
-    },
-    {
-      url: "https://www.nhk.or.jp/rss/news/cat5.xml",
-      provider: "NHK",
-      category: "経済",
-      priority: 1,
-    },
-    {
-      url: "https://www.nhk.or.jp/rss/news/cat6.xml",
-      provider: "NHK",
-      category: "国際",
-      priority: 1,
-    },
-    {
-      url: "https://www.nhk.or.jp/rss/news/cat7.xml",
-      provider: "NHK",
-      category: "スポーツ",
-      priority: 1,
-    },
-    {
-      url: "https://news.yahoo.co.jp/rss/media/kyodonews/all.xml",
-      provider: "Y!",
-      category: "",
-      priority: 1,
-    },
-
-    // ロイター
-    {
-      url: "https://news.google.com/rss/search?q=inurl:https://jp.reuters.com&hl=ja&gl=JP&ceid=JP%3Aja",
-      provider: "G!",
-      category: "",
-      priority: 1,
-    },
-
-    // 日経新聞
-    {
-      url: "https://news.google.com/rss/search?q=inurl:https://www.nikkei.com&hl=ja&gl=JP&ceid=JP%3Aja",
-      provider: "G!",
-      category: "",
-      priority: 1,
-    },
-  ];
+    });
+  }
 
   await loopbody(urls);
 };
