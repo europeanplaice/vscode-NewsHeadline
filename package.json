@@ -1,8 +1,8 @@
 {
-  "name": "vscode-newsheadline",
-  "displayName": "vscode-NewsHeadline",
+  "name": "newsheadlines",
+  "displayName": "newsheadlines",
   "description": "",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "engines": {
     "vscode": "^1.71.0"
   },
@@ -10,23 +10,33 @@
     "Other"
   ],
   "activationEvents": [
-    "*"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "vscode-newsheadline.helloWorld",
+        "command": "newsheadlines.helloWorld",
         "title": "Hello World"
       }
     ],
     "configuration": {
-      "title": "vscode-NewsHeadline",
+      "title": "newsheadlines",
       "properties": {
-        "vscode-NewsHeadline.newsSource": {
+        "newsheadlines.newsSource": {
           "type": "array",
-          "default": ["https://www.nhk.or.jp/rss/news/cat0.xml"],
-          "description": "News Sources"
+          "default": ["https://news.google.com/rss/search?q=inurl:www.reuters.com&hl=en-US&gl=US&ceid=US:en"],
+          "description": "The list of news sources. It must be RSS2.0."
+        },
+        "newsheadlines.length": {
+          "type": "number",
+          "default": 50,
+          "description": "The length of the headline's character on the status bar"
+        },
+        "newsheadlines.showIntervalSeconds": {
+          "type": "number",
+          "default": 30,
+          "description": "Interval seconds to show a next news"
         }
       }
     }
@@ -60,6 +70,7 @@
     "jsdom": "^20.0.0"
   },
   "repository": {
-    "type": "git"
+    "type": "git",
+    "url": "https://github.com/europeanplaice/vscode-NewsHeadline"
   }
 }
