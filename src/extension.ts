@@ -144,7 +144,7 @@ function showLatestNews() {
       resolve();
     }
   }).then(() => {
-    showlength = Math.max(vscode.workspace.getConfiguration('newsheadlines').length, 20);
+    showlength = vscode.workspace.getConfiguration('newsheadlines').length;
     let filteredNewsgroup = newsgroup.filter(news => news.count === Math.min(...newsgroup.map((p) => p.count)));
     filteredNewsgroup = filteredNewsgroup.filter(news => news.priority === Math.min(...filteredNewsgroup.map((p) => p.priority)));
     let selectedNews: News | undefined;
@@ -239,7 +239,7 @@ export async function activate(context: vscode.ExtensionContext) {
   getLatestNews();
   showLatestNews();
   setInterval(getLatestNews, 180_000);
-  setInterval(showLatestNews, Math.max(vscode.workspace.getConfiguration('newsheadlines').showIntervalSeconds * 1000), 30000);
+  setInterval(showLatestNews, vscode.workspace.getConfiguration('newsheadlines').showIntervalSeconds * 1000);
 
   context.subscriptions.push(disposable1);
   context.subscriptions.push(myStatusBarItem);
