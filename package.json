@@ -21,7 +21,7 @@
       }
     ],
     "configuration": {
-      "title": "newsheadlines",
+      "title": "News Headlines",
       "properties": {
         "newsheadlines.newsSource": {
           "type": "array",

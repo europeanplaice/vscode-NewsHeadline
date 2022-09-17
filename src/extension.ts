@@ -14,7 +14,7 @@ type FullTitle = {
 };
 
 function renderFullTitle(fulltitle: FullTitle) {
-  return `${fulltitle.icon}${fulltitle.title} ${fulltitle.dateInfo}`;
+  return `${fulltitle.icon}${fulltitle.title}`;
 }
 
 type News = {
@@ -193,7 +193,7 @@ function showLatestNews() {
     };
 
     currentLink = selectedNews["link"];
-    myStatusBarItem.tooltip = new vscode.MarkdownString(selectedNews["description"]);
+    myStatusBarItem.tooltip = new vscode.MarkdownString(selectedNews["description"] + "  \n" + dateInfo);
     myStatusBarItem.name = "News Headlines";
     myStatusBarItem.command = "newsheadlines.openlink";
     myStatusBarItem.show();
