@@ -26,16 +26,19 @@
         "newsheadlines.newsSource": {
           "type": "array",
           "default": ["https://news.google.com/rss/search?q=inurl:www.reuters.com&hl=en-US&gl=US&ceid=US:en"],
-          "description": "The list of news sources. It must be RSS2.0."
+          "description": "The list of news sources. It must be RSS2.0.",
+          "minItems": 1
         },
         "newsheadlines.length": {
           "type": "number",
           "default": 40,
+          "minimum": 20,
           "description": "The length of the headline's character on the status bar"
         },
         "newsheadlines.showIntervalSeconds": {
           "type": "number",
           "default": 30,
+          "minimum": 30,
           "description": "Interval seconds to show a next news"
         }
       }
