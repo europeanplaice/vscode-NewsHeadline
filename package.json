@@ -26,7 +26,7 @@
         "newsheadlines.newsSource": {
           "type": "array",
           "default": ["https://news.google.com/rss/search?q=inurl:www.reuters.com&hl=en-US&gl=US&ceid=US:en"],
-          "description": "The list of news sources. It must be RSS2.0.",
+          "description": "The list of news sources. It must be RSS2.0. The change may take a few minues to reflect.",
           "minItems": 1
         },
         "newsheadlines.length": {
