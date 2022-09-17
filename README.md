@@ -1,9 +1,9 @@
 # newsheadlines
-It shows news headlines on the status bar.
+It shows news headlines on the status bar. You can add news sources as RSS feed. The news is updated every three minutes in the background.
 ![example](example.gif)
 ## Customization
 
-Some cutomizations are available in Settings.
+Some customizations are available in Settings.
 ### newsSource
 It only can accept RSS2.0.
 ```json
