@@ -187,7 +187,7 @@ function showLatestNews() {
 
     currentLink = selectedNews["link"];
     myStatusBarItem.tooltip = new vscode.MarkdownString(selectedNews["description"]);
-    myStatusBarItem.name = "newsheadlines";
+    myStatusBarItem.name = "News Headlines";
     myStatusBarItem.command = "newsheadlines.openlink";
     myStatusBarItem.show();
     longTitleMove(fulltitle);

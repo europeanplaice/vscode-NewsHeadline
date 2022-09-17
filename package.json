@@ -1,6 +1,6 @@
 {
   "name": "newsheadlines",
-  "displayName": "newsheadlines",
+  "displayName": "News Headlines",
   "description": "",
   "version": "0.0.9",
   "engines": {
@@ -30,7 +30,7 @@
         },
         "newsheadlines.length": {
           "type": "number",
-          "default": 50,
+          "default": 40,
           "description": "The length of the headline's character on the status bar"
         },
         "newsheadlines.showIntervalSeconds": {
