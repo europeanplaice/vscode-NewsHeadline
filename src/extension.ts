@@ -111,8 +111,8 @@ async function longTitleMove(fulltitle: FullTitle) {
     });
     await wait(10);
   }
-  for (let i = 0; i < fullTitleString.length - showlength + 2; i++) {
-    let transitionStr = fullTitleString.slice(i, i + showlength);
+  for (let i = 0; i < fullTitleString.length - showlength + 4; i++) {
+    let transitionStr = `[${fullTitleString}]`.slice(i, i + showlength);
     fulltitle.title = transitionStr;
     myStatusBarItem.text = renderFullTitle(fulltitle);
     myStatusBarItem.show();
