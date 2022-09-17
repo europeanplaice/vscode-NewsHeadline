@@ -39,7 +39,7 @@
           "type": "number",
           "default": 30,
           "minimum": 30,
-          "description": "Interval seconds to show a next news"
+          "description": "Interval seconds to show a next news. Reload required."
         }
       }
     }
