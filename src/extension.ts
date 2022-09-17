@@ -88,7 +88,6 @@ async function loopbody(sourceinfos: SourceInfo[]) {
               };
               newsgroup.push(news);
             };
-            console.log("getnews");
           } else {
           }
         });
@@ -96,7 +95,6 @@ async function loopbody(sourceinfos: SourceInfo[]) {
   }
   newsgroup = newsgroup.filter(news => news.localdate.getTime() > dateThresholdNum);
   newsgroup = newsgroup.filter(news => vscode.workspace.getConfiguration('newsheadlines').newsSource.includes(news.source));
-  console.log(`updated. The number of news is ${newsgroup.length}`);
   return;
 }
 
@@ -133,9 +131,7 @@ function showLatestNews() {
       let check = setInterval(() => {
         myStatusBarItem.text = `$(octoface) ` + `Initializing...`;
         myStatusBarItem.show();
-        console.log("interval");
         if (newsgroup.length > 0) {
-          console.log("news found after wait " + newsgroup.length);
           clearInterval(check);
           resolve();
         }
@@ -158,11 +154,8 @@ function showLatestNews() {
       );
     }
     if (!selectedNews) {
-      console.log("selectedNews not found");
       return;
     }
-    console.log(`The number of filteredNewsgroup is ${filteredNewsgroup.length}`);
-    console.log(selectedNews.title, selectedNews.localdate, selectedNews.count);
     let icon: string = `$(octoface) `;
     if (selectedNews["count"] === 0) {
       icon = `$(zap) `;
@@ -199,14 +192,11 @@ function showLatestNews() {
     myStatusBarItem.show();
     longTitleMove(fulltitle);
 
-    console.log("before count up");
     let idxUnfiltered = newsgroup.findIndex(news => news["title"] === rawtitle);
     if (idxUnfiltered === -1) {
-      console.log("not found idxUnfiltered");
     } else {
       newsgroup[idxUnfiltered]["count"] += 1;
       newsgroup[idxUnfiltered]["lastRead"] = new Date();
-      console.log("count up");
     }
   });
 }
