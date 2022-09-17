@@ -3,6 +3,7 @@
   "displayName": "News Headlines",
   "description": "",
   "version": "0.0.9",
+  "publisher": "TomohiroEndo",
   "engines": {
     "vscode": "^1.71.0"
   },
