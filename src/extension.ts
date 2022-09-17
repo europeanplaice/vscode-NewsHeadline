@@ -238,7 +238,7 @@ export async function activate(context: vscode.ExtensionContext) {
   myStatusBarItem.show();
   getLatestNews();
   showLatestNews();
-  setInterval(getLatestNews, 180_000);
+  setInterval(getLatestNews, vscode.workspace.getConfiguration('newsheadlines').newsFetchIntervalSeconds * 1000);
   setInterval(showLatestNews, vscode.workspace.getConfiguration('newsheadlines').showIntervalSeconds * 1000);
 
   context.subscriptions.push(disposable1);
