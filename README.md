@@ -1,4 +1,4 @@
-# newsheadlines
+# News Headlines
 It shows news headlines on the status bar. You can add news sources as RSS feed. The news is updated every three minutes in the background.
 ![example](example.gif)
 ## Customization

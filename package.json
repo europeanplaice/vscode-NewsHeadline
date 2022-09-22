@@ -1,8 +1,8 @@
 {
   "name": "newsheadlines",
   "displayName": "News Headlines",
-  "description": "",
-  "version": "0.0.9",
+  "description": "Showing news on the status bar like a news ticker",
+  "version": "0.0.10",
   "publisher": "TomohiroEndo",
   "engines": {
     "vscode": "^1.71.0"
@@ -34,7 +34,7 @@
           "type": "number",
           "default": 40,
           "minimum": 20,
-          "description": "The length of the headline's character on the status bar"
+          "description": "The length of the headline's characters on the status bar"
         },
         "newsheadlines.showIntervalSeconds": {
           "type": "number",

@@ -74,8 +74,7 @@ async function loopbody(sourceinfos: SourceInfo[]) {
 
           if (title && link && localdate.getTime() > dateThresholdNum) {
             let foundnews = newsgroup.find(news => news.title === titleString);
-            if (foundnews) {
-            } else {
+            if (!foundnews) {
               let news: News = {
                 "title": title.textContent,
                 "description": description,
@@ -88,7 +87,6 @@ async function loopbody(sourceinfos: SourceInfo[]) {
               };
               newsgroup.push(news);
             };
-          } else {
           }
         });
       });
@@ -167,7 +165,7 @@ function showLatestNews() {
     if (selectedNews["title"]) {
       rawtitle = selectedNews["title"];
     } else {
-      rawtitle = `News collecting...`;
+      rawtitle = `Initializing...`;
     }
 
     let title = rawtitle;
