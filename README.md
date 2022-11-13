@@ -5,7 +5,7 @@ It shows news headlines on the status bar. You can add news sources as RSS feed.
 
 Some customizations are available in Settings.
 ### newsSource
-It only can accept RSS2.0.
+It only can accept RSS2.0. Here is the default setting.
 ```json
 "newsheadlines.newsSource": [
     "https://news.google.com/rss/search?q=inurl:www.reuters.com&hl=en-US&gl=US&ceid=US:en",

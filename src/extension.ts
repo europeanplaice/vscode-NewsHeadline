@@ -48,13 +48,16 @@ async function loopbody(sourceinfos: SourceInfo[]) {
         doc.documentElement.querySelectorAll("item").forEach((item) => {
           let pubdate = item.querySelector("pubDate");
           if (!pubdate) { return; };
+          if (!pubdate.textContent) { return; };
+
           let title = item.querySelector("title");
           if (!title) { return; };
+          if (!title.textContent) { return; };
+
           let titleString = title.textContent;
           if (!titleString) { return; };
-          if (!pubdate.textContent) { return; };
+
           let datestring = pubdate.textContent;
-          if (!title.textContent) { return; };
           let date = new Date(datestring);
           let utcdate = new Date(
             date.getUTCFullYear(),
@@ -69,8 +72,7 @@ async function loopbody(sourceinfos: SourceInfo[]) {
 
           let description = item.querySelector("description")?.textContent;
           description = description ? description : "";
-          let link: string | null | undefined;
-          link = item.querySelector("link")?.textContent;
+          let link: string | null | undefined = item.querySelector("link")?.textContent;
 
           if (title && link && localdate.getTime() > dateThresholdNum) {
             let foundnews = newsgroup.find(news => news.title === titleString);
