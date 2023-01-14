@@ -13,12 +13,15 @@ It only can accept RSS2.0. Here is the default setting.
 ]
 ```
 ### length
-The length of the headline's character on the status bar
+The length of the headline's characters on the status bar
 ```json
 "newsheadlines.length": 40
 ```
+The minimum value is `20`.
+
 ### showIntervalSeconds
 Interval seconds to show a next news
 ```json
 "newsheadlines.showIntervalSeconds": 30
 ```
+The minimum value is `30`.
